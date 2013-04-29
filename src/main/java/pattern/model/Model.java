@@ -8,30 +8,29 @@ package pattern.model;
 
 import java.io.Serializable;
 
-import cascading.tuple.Fields;
-import cascading.tuple.Tuple;
 import pattern.PatternException;
 import pattern.Schema;
+import storm.trident.tuple.TridentTuple;
 
+public abstract class Model implements Serializable {
+	public Schema schema = null;
 
-public abstract class Model implements Serializable
-  {
-  public Schema schema = null;
+	/**
+	 * Prepare to classify with this model. Called immediately before the
+	 * enclosing Operation instance is put into play processing Tuples.
+	 */
+	public abstract void prepare();
 
-  /**
-   * Prepare to classify with this model. Called immediately before
-   * the enclosing Operation instance is put into play processing
-   * Tuples.
-   */
-  public abstract void prepare();
-
-  /**
-   * Classify an input tuple, returning the predicted label.
-   *
-   * @param values tuple values
-   * @param fields tuple fields
-   * @return String
-   * @throws PatternException
-   */
-  public abstract String classifyTuple( Tuple values, Fields fields ) throws PatternException;
-  }
+	/**
+	 * Classify an input tuple, returning the predicted label.
+	 * 
+	 * @param values
+	 *            tuple values
+	 * @param fields
+	 *            tuple fields
+	 * @return String
+	 * @throws PatternException
+	 */
+	public abstract String classifyTuple(TridentTuple values)
+			throws PatternException;
+}

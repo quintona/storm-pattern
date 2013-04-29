@@ -6,85 +6,65 @@
 
 package pattern;
 
-import cascading.flow.FlowProcess;
-import cascading.operation.BaseOperation;
-import cascading.operation.Function;
-import cascading.operation.FunctionCall;
-import cascading.operation.OperationCall;
-import cascading.tuple.Fields;
-import cascading.tuple.Tuple;
-import cascading.tuple.TupleEntry;
+import java.util.Map;
 
+import storm.trident.operation.BaseFunction;
+import storm.trident.operation.TridentCollector;
+import storm.trident.operation.TridentOperationContext;
+import storm.trident.tuple.TridentTuple;
+import backtype.storm.tuple.Fields;
+import backtype.storm.tuple.Values;
 
-public class ClassifierFunction extends BaseOperation<ClassifierFunction.Context> implements Function<ClassifierFunction.Context>
-  {
-  public Classifier classifier;
+public class ClassifierFunction extends BaseFunction {
+	public Classifier classifier;
 
-  /** Class Context is used to hold intermediate values. */
-  protected static class Context
-    {
-    Tuple tuple = Tuple.size( 1 );
+	private String pmmlPath;
 
-    public Tuple result( String label )
-      {
-      tuple.set( 0, label );
+	/**
+	 * @param pmmlPath
+	 *            PMML file
+	 */
+	public ClassifierFunction(String pmmlPath) {
+		this.pmmlPath = pmmlPath;
+	}
 
-      return tuple;
-      }
-    }
+	/**
+	 * @param flowProcess
+	 * @param operationCall
+	 */
+	@Override
+	public void prepare(Map conf, TridentOperationContext context) {
 
-  /**
-   * @param fieldDeclaration result field
-   * @param pmmlPath PMML file
-   */
-  public ClassifierFunction( Fields fieldDeclaration, String pmmlPath )
-    {
-    super( 1, fieldDeclaration );
-    this.classifier = new Classifier( pmmlPath );
-    }
+		this.classifier = new Classifier(pmmlPath);
+		classifier.prepare();
+	}
 
-  /**
-   * @param flowProcess
-   * @param operationCall
-   */
-  @Override
-  public void prepare( FlowProcess flowProcess, OperationCall<ClassifierFunction.Context> operationCall )
-    {
-    super.prepare( flowProcess, operationCall );
-    operationCall.setContext( new ClassifierFunction.Context() );
-    classifier.prepare();
-    }
+	/**
+	 * @param flowProcess
+	 * @param functionCall
+	 */
+	@Override
+	public void execute(TridentTuple tuple, TridentCollector collector) {
 
-  /**
-   * @param flowProcess
-   * @param functionCall
-   */
-  @Override
-  public void operate( FlowProcess flowProcess, FunctionCall<ClassifierFunction.Context> functionCall )
-    {
-    TupleEntry argument = functionCall.getArguments();
-    String label = classifier.classifyTuple( argument.getTuple(), argument.getFields() );
+		String label = classifier.classifyTuple(tuple);
+		collector.emit(new Values(label));
+	}
 
-    functionCall.getOutputCollector().add( functionCall.getContext().result( label ) );
-    }
+	/**
+	 * Returns a Fields data structure naming the input tuple fields.
+	 * 
+	 * @return Fields
+	 */
+	public Fields getInputFields() {
+		return classifier.model.schema.getInputFields();
+	}
 
-  /**
-   * Returns a Fields data structure naming the input tuple fields.
-   *
-   * @return Fields
-   */
-  public Fields getInputFields()
-    {
-    return classifier.model.schema.getInputFields();
-    }
-
-  /**
-   * Returns a String naming the predictor tuple fields.
-   *
-   * @return
-   */
-  public String getPredictor()
-    {
-    return classifier.model.schema.label_field.name;
-    }
-  }
+	/**
+	 * Returns a String naming the predictor tuple fields.
+	 * 
+	 * @return
+	 */
+	public String getPredictor() {
+		return classifier.model.schema.label_field.name;
+	}
+}

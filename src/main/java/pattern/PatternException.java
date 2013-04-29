@@ -6,28 +6,23 @@
 
 package pattern;
 
-
-public class PatternException extends RuntimeException
-  {
-  /**
+public class PatternException extends RuntimeException {
+	/**
    *
    */
-  public PatternException()
-    {
-    }
+	public PatternException() {
+	}
 
-  /** @param message  */
-  public PatternException( String message )
-    {
-    super( message );
-    }
+	/** @param message */
+	public PatternException(String message) {
+		super(message);
+	}
 
-  /**
-   * @param message
-   * @param cause
-   */
-  public PatternException( String message, Throwable cause )
-    {
-    super( message, cause );
-    }
-  }
+	/**
+	 * @param message
+	 * @param cause
+	 */
+	public PatternException(String message, Throwable cause) {
+		super(message, cause);
+	}
+}

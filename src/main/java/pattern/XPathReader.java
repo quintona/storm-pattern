@@ -6,8 +6,9 @@
 
 package pattern;
 
-import java.io.Reader;
 import java.io.IOException;
+import java.io.Reader;
+
 import javax.xml.namespace.QName;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -19,95 +20,83 @@ import javax.xml.xpath.XPathFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
-import org.xml.sax.SAXException;
 import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 
+public class XPathReader {
+	/** Field LOG */
+	private static final Logger LOG = LoggerFactory
+			.getLogger(XPathReader.class);
 
-public class XPathReader
-  {
-  /** Field LOG */
-  private static final Logger LOG = LoggerFactory.getLogger( XPathReader.class );
+	private Document xmlDocument;
+	private XPath xPath;
 
-  private Document xmlDocument;
-  private XPath xPath;
+	/**
+	 * Set up to read from the XML source.
+	 * 
+	 * @param xmlSource
+	 *            Reader for the XML
+	 */
+	public XPathReader(Reader xmlSource) {
+		try {
+			xmlDocument = DocumentBuilderFactory.newInstance()
+					.newDocumentBuilder().parse(new InputSource(xmlSource));
+			xPath = XPathFactory.newInstance().newXPath();
+		} catch (IOException exception) {
+			LOG.error("could not read PMML file", exception);
+			throw new PatternException(" could not read PMML file", exception);
+		} catch (SAXException exception) {
+			LOG.error("could not parse PMML file", exception);
+			throw new PatternException(" could not parse PMML file", exception);
+		} catch (ParserConfigurationException exception) {
+			LOG.error("could not configure parser for PMML file", exception);
+			throw new PatternException(
+					" could not configure parser for PMML file", exception);
+		}
+	}
 
-  /**
-   * Set up to read from the XML source.
-   *
-   * @param xmlSource Reader for the XML
-   */
-  public XPathReader( Reader xmlSource )
-    {
-    try
-      {
-      xmlDocument = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse( new InputSource( xmlSource ) );
-      xPath = XPathFactory.newInstance().newXPath();
-      }
-    catch( IOException exception )
-      {
-      LOG.error( "could not read PMML file", exception );
-      throw new PatternException( " could not read PMML file", exception );
-      }
-    catch( SAXException exception )
-      {
-      LOG.error( "could not parse PMML file", exception );
-      throw new PatternException( " could not parse PMML file", exception );
-      }
-    catch( ParserConfigurationException exception )
-      {
-      LOG.error( "could not configure parser for PMML file", exception );
-      throw new PatternException( " could not configure parser for PMML file", exception );
-      }
-    }
+	/**
+	 * @param expression
+	 * @param returnType
+	 * @return
+	 */
+	public Object read(String expression, QName returnType) {
+		Object result = null;
 
-  /**
-   * @param expression
-   * @param returnType
-   * @return
-   */
-  public Object read( String expression, QName returnType )
-    {
-    Object result = null;
+		try {
+			XPathExpression xPathExpression = xPath.compile(expression);
+			result = xPathExpression.evaluate(xmlDocument, returnType);
+		} catch (XPathExpressionException exception) {
+			String message = String
+					.format("could not evaluate XPath [ %s ] from doc root",
+							expression);
+			LOG.error(message, exception);
+			throw new PatternException(message, exception);
+		} finally {
+			return result;
+		}
+	}
 
-    try
-      {
-      XPathExpression xPathExpression = xPath.compile( expression );
-      result = xPathExpression.evaluate( xmlDocument, returnType );
-      }
-    catch( XPathExpressionException exception )
-      {
-      String message = String.format( "could not evaluate XPath [ %s ] from doc root", expression );
-      LOG.error( message, exception );
-      throw new PatternException( message, exception );
-      }
-    finally {
-      return result;
-      }
-    }
+	/**
+	 * @param item
+	 * @param expression
+	 * @param returnType
+	 * @return
+	 */
+	public Object read(Object item, String expression, QName returnType) {
+		Object result = null;
 
-  /**
-   * @param item
-   * @param expression
-   * @param returnType
-   * @return
-   */
-  public Object read( Object item, String expression, QName returnType )
-    {
-    Object result = null;
-
-    try
-      {
-      XPathExpression xPathExpression = xPath.compile( expression );
-      result = xPathExpression.evaluate( item, returnType );
-      }
-    catch( XPathExpressionException exception )
-      {
-      String message = String.format( "could not evaluate XPath [ %s ] from %s", expression, item.toString() );
-      LOG.error( message, exception );
-      throw new PatternException( message, exception );
-      }
-    finally {
-      return result;
-      }
-    }
-  }
+		try {
+			XPathExpression xPathExpression = xPath.compile(expression);
+			result = xPathExpression.evaluate(item, returnType);
+		} catch (XPathExpressionException exception) {
+			String message = String.format(
+					"could not evaluate XPath [ %s ] from %s", expression,
+					item.toString());
+			LOG.error(message, exception);
+			throw new PatternException(message, exception);
+		} finally {
+			return result;
+		}
+	}
+}
