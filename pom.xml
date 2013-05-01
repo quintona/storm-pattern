@@ -48,7 +48,7 @@
 			<artifactId>storm</artifactId>
 			<version>0.8.2</version>
 			<!-- keep storm out of the jar-with-dependencies -->
-			<scope>compile</scope>
+			<scope>provided</scope>
 			<exclusions>
 				<exclusion>
 					<artifactId>slf4j-api</artifactId>
