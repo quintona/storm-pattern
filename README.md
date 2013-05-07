@@ -14,7 +14,37 @@ Current support for PMML includes:
  * [Logistic Regression](http://en.wikipedia.org/wiki/Logistic_regression) in [PMML 4.0.1+](http://www.dmg.org/v4-0-1/Regression.html)
 
 
-## Build Instructions
+Use in Storm Topology
+---------------------
+
+First include the clojars repo in your POM (or project.clj or sbt or wherever):
+
+	<repositories>
+		<repository>
+			<id>clojars.org</id>
+			<url>http://clojars.org/repo</url>
+		</repository>
+	</repositories>
+	
+And then add the dependency:
+
+	<dependency>
+  		<groupId>com.github.quintona</groupId>
+  		<artifactId>storm-pattern</artifactId>
+  		<version>0.0.2-SNAPSHOT</version>
+	</dependency>
+
+I have created a very simple trident topology to illustrate the usage, it is available from [here.](https://github.com/quintona/pattern-demo-topology). At a high level, this is all that is required:
+
+	topology.newStream("valueStream", spout)
+				.each(new Fields(fields), new ClassifierFunction(pmml_file),
+						new Fields("prediction"))
+				.each(new Fields("prediction"), new PrintlnFunction(),
+						new Fields());
+						
+You simply need to create the Classifier function and pass in the model. 
+
+## Build Instructions (if you are extending storm-pattern)
 ------------------
 To build and then run its unit tests:
 
@@ -31,30 +61,6 @@ plus a predictive model in PMML:
 This will generate `huge.rf.xml` as the PMML export for a Random
 Forest classifier plus `huge.tsv` as a baseline data set for
 regression testing.
-
-
-
-Use in Storm Topology
----------------------
-
-I have created a very simple trident topology to illustrate the usage, it is available from [here.](https://github.com/quintona/pattern-demo-topology). At a high level, this is all that is required:
-
-	topology.newStream("valueStream", spout)
-				.each(new Fields(fields), new ClassifierFunction(pmml_file),
-						new Fields("prediction"))
-				.each(new Fields("prediction"), new PrintlnFunction(),
-						new Fields());
-						
-You simply need to create the Classifier function and pass in the model. 
-
-Remeber to include the dependency (obviously):
-
-	<dependency>
-			<groupId>com.github.quintona</groupId>
-			<artifactId>storm-pattern</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
-		</dependency>
-
 
 Example Models
 --------------
